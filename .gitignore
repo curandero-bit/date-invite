@@ -1,0 +1,4 @@
+tools/
+*.exe
+.DS_Store
+Thumbs.db
