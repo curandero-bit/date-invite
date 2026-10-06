@@ -1,5 +1,14 @@
+const home = document.getElementById("home");
 const invite = document.getElementById("invite");
 const success = document.getElementById("success");
+const profileForm = document.getElementById("profileForm");
+const shareBox = document.getElementById("shareBox");
+const shareLink = document.getElementById("shareLink");
+const shareStatus = document.getElementById("shareStatus");
+const copyBtn = document.getElementById("copyBtn");
+const previewBtn = document.getElementById("previewBtn");
+const savedList = document.getElementById("savedList");
+const savedItems = document.getElementById("savedItems");
 const yesBtn = document.getElementById("yesBtn");
 const noBtn = document.getElementById("noBtn");
 const hint = document.getElementById("hint");
@@ -9,7 +18,7 @@ const formStatus = document.getElementById("formStatus");
 const canvas = document.getElementById("petals");
 const ctx = canvas ? canvas.getContext("2d") : null;
 
-const INVITE_EMAIL = "kiber_kotleta@inbox.ru";
+const STORAGE_KEY = "date-invite-profiles";
 
 const excuses = [
   "Нет? Точно?",
@@ -17,12 +26,155 @@ const excuses = [
   "Это была шутка, да?",
   "Кнопка сломалась. Жми «Да».",
   "Я всё равно буду ждать.",
-  "Ладно, ты почти сдалась.",
+  "Ладно, ты почти согласил(а)ся.",
 ];
 
+let profile = null;
 let excuseIndex = 0;
 let celebrating = false;
 const hearts = [];
+
+function encodeProfile(data) {
+  const json = JSON.stringify(data);
+  const bytes = new TextEncoder().encode(json);
+  let binary = "";
+  bytes.forEach((b) => {
+    binary += String.fromCharCode(b);
+  });
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function decodeProfile(token) {
+  const padded = token.replace(/-/g, "+").replace(/_/g, "/");
+  const pad = padded.length % 4 === 0 ? "" : "=".repeat(4 - (padded.length % 4));
+  const binary = atob(padded + pad);
+  const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+function readToken() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("p")) return params.get("p");
+  const hash = window.location.hash.replace(/^#/, "");
+  if (hash.startsWith("p=")) return hash.slice(2);
+  return null;
+}
+
+function inviteUrl(token) {
+  const base = `${window.location.origin}${window.location.pathname}`;
+  return `${base}?p=${token}`;
+}
+
+function loadSaved() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveProfile(entry) {
+  const list = loadSaved().filter((item) => item.token !== entry.token);
+  list.unshift(entry);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list.slice(0, 12)));
+}
+
+function renderSaved() {
+  const list = loadSaved();
+  if (!list.length) {
+    savedList.hidden = true;
+    return;
+  }
+  savedList.hidden = false;
+  savedItems.innerHTML = "";
+  list.forEach((item) => {
+    const li = document.createElement("li");
+    const link = document.createElement("a");
+    link.href = inviteUrl(item.token);
+    link.textContent = item.to
+      ? `${item.from} → ${item.to}`
+      : `${item.from}: ${item.title}`;
+    li.appendChild(link);
+    savedItems.appendChild(li);
+  });
+}
+
+function showHome() {
+  document.title = "Создай приглашение";
+  home.hidden = false;
+  invite.hidden = true;
+  success.hidden = true;
+  renderSaved();
+}
+
+function applyInvite(data) {
+  profile = data;
+  document.title = data.title || "Приглашение на свидание";
+  document.getElementById("inviteKicker").textContent = data.kicker || "тихо, не кричи";
+  document.getElementById("inviteTitle").textContent = data.title;
+  document.getElementById("inviteLead").textContent = data.lead;
+  const fromLine = document.getElementById("fromLine");
+  if (data.from) {
+    fromLine.hidden = false;
+    fromLine.textContent = data.to
+      ? `От ${data.from} для ${data.to}`
+      : `От ${data.from}`;
+  } else {
+    fromLine.hidden = true;
+  }
+  document.getElementById("successLead").textContent = data.from
+    ? `Выбери место и время — письмо уйдёт ${data.from}.`
+    : "Выбери место и время — письмо уйдёт автору приглашения.";
+  home.hidden = true;
+  invite.hidden = false;
+  success.hidden = true;
+}
+
+function showCreateResult(token, data) {
+  shareBox.hidden = false;
+  shareLink.value = inviteUrl(token);
+  shareStatus.textContent = "";
+  shareStatus.classList.remove("error", "ok");
+  saveProfile({
+    token,
+    from: data.from,
+    to: data.to || "",
+    title: data.title,
+    email: data.email,
+  });
+  renderSaved();
+  shareBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+profileForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const data = {
+    from: document.getElementById("fromInput").value.trim(),
+    email: document.getElementById("emailInput").value.trim(),
+    to: document.getElementById("toInput").value.trim(),
+    title: document.getElementById("titleInput").value.trim(),
+    lead: document.getElementById("leadInput").value.trim(),
+    kicker: "тихо, не кричи",
+  };
+  if (!data.from || !data.email || !data.title || !data.lead) return;
+  const token = encodeProfile(data);
+  showCreateResult(token, data);
+});
+
+copyBtn.addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(shareLink.value);
+    shareStatus.textContent = "Ссылка скопирована.";
+    shareStatus.classList.add("ok");
+  } catch {
+    shareLink.select();
+    shareStatus.textContent = "Выдели ссылку и скопируй вручную.";
+  }
+});
+
+previewBtn.addEventListener("click", () => {
+  if (shareLink.value) window.location.href = shareLink.value;
+});
 
 function resize() {
   if (!canvas) return;
@@ -34,7 +186,7 @@ function spawnHeart(burst = false) {
   const count = burst ? 48 : 1;
   for (let i = 0; i < count; i += 1) {
     hearts.push({
-      x: burst ? Math.random() * canvas.width : Math.random() * canvas.width,
+      x: Math.random() * canvas.width,
       y: burst ? canvas.height + Math.random() * 40 : -20,
       s: 8 + Math.random() * 14,
       v: 0.6 + Math.random() * 1.4,
@@ -85,6 +237,7 @@ function viewportSize() {
 }
 
 function moveNo(event) {
+  if (!noBtn.isConnected) return;
   const rect = noBtn.getBoundingClientRect();
   const pad = 16;
   const { width, height } = viewportSize();
@@ -118,12 +271,14 @@ function sayYes() {
   spawnHeart(true);
   invite.hidden = true;
   success.hidden = false;
-  noBtn.remove();
+  if (noBtn.isConnected) noBtn.remove();
 }
 
 function letterBody({ date, time, place, note }) {
   return [
     "Свидание подтверждено.",
+    profile?.from ? `Кому: ${profile.from}` : "",
+    profile?.to ? `От кого ответил(а): ${profile.to}` : "",
     `Дата: ${date}`,
     `Время: ${time}`,
     `Место: ${place}`,
@@ -157,6 +312,8 @@ async function sendByFormSubmit(email, fields) {
         _subject: "Свидание: место и время",
         _captcha: "false",
         _template: "table",
+        От: profile?.to || "гость",
+        Кому: profile?.from || "—",
         Дата: fields.date,
         Время: fields.time,
         Место: fields.place,
@@ -186,8 +343,12 @@ dateForm.addEventListener("submit", async (event) => {
     place: document.getElementById("placeInput").value.trim(),
     note: document.getElementById("noteInput").value.trim(),
   };
-  const email = INVITE_EMAIL.trim();
+  const email = (profile?.email || "").trim();
 
+  if (!email) {
+    setStatus("В этом приглашении не указана почта.", "error");
+    return;
+  }
   if (!fields.date || !fields.time || !fields.place) {
     setStatus("Нужны дата, время и место.", "error");
     return;
@@ -198,7 +359,10 @@ dateForm.addEventListener("submit", async (event) => {
 
   try {
     await sendByFormSubmit(email, fields);
-    setStatus("Письмо отправлено. Если это первый раз — подтверди адрес в письме от FormSubmit.", "ok");
+    setStatus(
+      "Письмо отправлено. Если это первый раз для этой почты — подтверди адрес в письме от FormSubmit.",
+      "ok"
+    );
     dateForm.querySelectorAll("input, textarea, button").forEach((el) => {
       if (el !== sendBtn) el.disabled = true;
     });
@@ -230,3 +394,17 @@ noBtn.addEventListener("click", (event) => {
 window.addEventListener("resize", resize);
 resize();
 tick();
+
+const token = readToken();
+if (token) {
+  try {
+    applyInvite(decodeProfile(token));
+  } catch {
+    showHome();
+    shareStatus.textContent = "Ссылка повреждена. Создай приглашение заново.";
+    shareStatus.classList.add("error");
+    shareBox.hidden = false;
+  }
+} else {
+  showHome();
+}

@@ -246,6 +246,89 @@ h1 {
   color: #2f6f4e;
 }
 
+.from-line {
+  margin: 12px auto 0;
+  color: var(--yes);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.create-link {
+  margin: 18px 0 0;
+  font-size: 13px;
+}
+
+.create-link a {
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.btn.ghost {
+  background: white;
+  color: var(--ink);
+  border: 1px solid rgba(58, 29, 46, 0.12);
+  box-shadow: none;
+}
+
+.share-box,
+.saved-list {
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(58, 29, 46, 0.1);
+  text-align: left;
+}
+
+.share-title {
+  margin: 0 0 12px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.share-box input {
+  width: 100%;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(58, 29, 46, 0.12);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
+.share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.share-actions .btn {
+  flex: 1 1 140px;
+}
+
+.saved-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.saved-list a {
+  display: block;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--ink);
+  text-decoration: none;
+  border: 1px solid rgba(58, 29, 46, 0.08);
+}
+
+.saved-list a:hover {
+  border-color: var(--yes);
+}
+
 [hidden] {
   display: none !important;
 }

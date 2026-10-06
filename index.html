@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
-    <title>У меня к тебе вопрос</title>
+    <title>Приглашение на свидание</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -24,26 +24,92 @@
     <canvas id="petals" aria-hidden="true"></canvas>
 
     <main class="stage">
-      <section class="card" id="invite">
-        <p class="kicker">тихо, не кричи</p>
-        <h1>Пойдёшь со мной на свидание?</h1>
+      <section class="card" id="home" hidden>
+        <p class="kicker">для двоих</p>
+        <h1>Создай приглашение</h1>
         <p class="lead">
+          Заполни профиль, получи ссылку и отправь её тому, кого зовёшь.
+          Ответ придёт тебе на почту.
+        </p>
+
+        <form id="profileForm" class="date-form">
+          <label>
+            <span>Как тебя зовут</span>
+            <input id="fromInput" type="text" maxlength="40" placeholder="Даниил" required />
+          </label>
+          <label>
+            <span>Твоя почта</span>
+            <input
+              id="emailInput"
+              type="email"
+              placeholder="you@email.com"
+              required
+            />
+          </label>
+          <label>
+            <span>Для кого</span>
+            <input id="toInput" type="text" maxlength="40" placeholder="можно имя или просто «ты»" />
+          </label>
+          <label>
+            <span>Вопрос</span>
+            <input
+              id="titleInput"
+              type="text"
+              maxlength="80"
+              value="Пойдёшь со мной на свидание?"
+              required
+            />
+          </label>
+          <label>
+            <span>Текст приглашения</span>
+            <textarea
+              id="leadInput"
+              rows="3"
+              maxlength="280"
+              required
+            >Кофе, вечерний свет, разговоры ни о чём и немного волнения. Я уже всё придумал — осталось только твоё «да».</textarea>
+          </label>
+          <button class="btn yes" type="submit">Создать ссылку</button>
+        </form>
+
+        <div id="shareBox" class="share-box" hidden>
+          <p class="share-title">Готово. Отправь эту ссылку:</p>
+          <input id="shareLink" type="text" readonly />
+          <div class="share-actions">
+            <button class="btn yes" id="copyBtn" type="button">Скопировать</button>
+            <button class="btn ghost" id="previewBtn" type="button">Открыть</button>
+          </div>
+          <p class="form-status" id="shareStatus" role="status"></p>
+        </div>
+
+        <div id="savedList" class="saved-list" hidden>
+          <p class="share-title">Твои приглашения</p>
+          <ul id="savedItems"></ul>
+        </div>
+      </section>
+
+      <section class="card" id="invite" hidden>
+        <p class="kicker" id="inviteKicker">тихо, не кричи</p>
+        <h1 id="inviteTitle">Пойдёшь со мной на свидание?</h1>
+        <p class="lead" id="inviteLead">
           Кофе, вечерний свет, разговоры ни о чём и немного волнения.
           Я уже всё придумал — осталось только твоё «да».
         </p>
+        <p class="from-line" id="fromLine"></p>
 
         <div class="actions">
           <button class="btn yes" id="yesBtn" type="button">Да, пойду</button>
           <button class="btn no" id="noBtn" type="button">Нет</button>
         </div>
         <p class="hint" id="hint">Если сомневаешься — попробуй нажать «Нет».</p>
+        <p class="create-link"><a href="./">Создать своё приглашение</a></p>
       </section>
 
       <section class="card success" id="success" hidden aria-live="polite">
         <p class="kicker">вот и ответ</p>
         <h1>Значит, свидание состоится</h1>
-        <p class="lead">
-          Выбери место и время — я получу письмо и приду.
+        <p class="lead" id="successLead">
+          Выбери место и время — письмо уйдёт автору приглашения.
         </p>
 
         <form id="dateForm" class="date-form">
